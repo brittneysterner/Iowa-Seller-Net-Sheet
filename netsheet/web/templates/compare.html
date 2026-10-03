@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Compare — {{ tx.id }}{% endblock %}
+{% block nav %}
+  <a href="{{ url_for('edit', tx_id=tx.id) }}">← Back to editing</a>
+  <a href="{{ url_for('results', tx_id=tx.id, view='agent') }}">Agent View</a>
+{% endblock %}
+{% block content %}
+<h1>Compare to final settlement statement</h1>
+<p class="muted">For testing on a closed transaction. Type each figure from the final settlement statement next to the app's figure. Differences are shown in red.</p>
+<form method="post" class="card">
+  <table class="lines">
+    <tr><th>Item</th><th class="num">App figure</th><th class="num">Settlement figure</th><th class="num">Difference</th></tr>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.line.label }} <span class="muted small">({{ r.line.source }})</span></td>
+      <td class="num">{{ fmt(r.line.amount, 'Not entered') }}</td>
+      <td class="num"><input type="text" name="settle-{{ r.line.key }}" value="{{ r.settled }}" style="max-width:150px;text-align:right"></td>
+      <td class="num">{% if r.diff is not none %}<span class="{{ 'diff-ok' if r.diff == 0 else 'diff-bad' }}">{{ fmt(r.diff) }}</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total">
+      <td>NET PROCEEDS TO SELLER</td>
+      <td class="num">{{ fmt(sheet.net) }}</td>
+      <td class="num"><input type="text" name="settlement_net" value="{{ comp.settlement_net }}" style="max-width:150px;text-align:right"></td>
+      <td class="num">{% if net_diff is not none %}<span class="{{ 'diff-ok' if net_diff == 0 else 'diff-bad' }}">{{ fmt(net_diff) }}</span>{% endif %}</td>
+    </tr>
+  </table>
+  <div class="field" style="margin-top:12px"><label>Items on the settlement statement that the app is missing, and other notes</label>
+    <textarea name="notes" rows="4">{{ comp.notes }}</textarea></div>
+  <p><button type="submit">Save comparison</button></p>
+  <p class="muted small">Difference = settlement figure − app figure. A positive number means the settlement was higher.</p>
+</form>
+{% endblock %}

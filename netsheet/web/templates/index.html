@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>Start a new net sheet</h2>
+  <form method="post" action="{{ url_for('new') }}">
+    <div class="mode-choice">
+      <label><input type="radio" name="mode" value="listing" checked>
+        <strong>Listing appointment</strong><br>
+        <span class="muted">No contract yet. Use a hypothetical sale price.</span></label>
+      <label><input type="radio" name="mode" value="contract">
+        <strong>Under contract</strong><br>
+        <span class="muted">You have an executed Purchase Agreement to work from.</span></label>
+    </div>
+    <div class="field" style="margin-top:14px">
+      <label for="name">Property address</label>
+      <input type="text" id="name" name="name" placeholder="e.g. 123 Main St, Forest City" required>
+      <div class="muted small">This also becomes the folder name. Folders are never renamed or deleted by this app.</div>
+    </div>
+    <p><button type="submit">Create net sheet</button></p>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Your net sheets</h2>
+  {% if transactions %}
+  <table class="lines">
+    <tr><th>Property</th><th>Type</th><th>Last changed</th></tr>
+    {% for t in transactions %}
+    <tr>
+      <td><a href="{{ url_for('edit', tx_id=t.id) }}">{{ t.id }}</a></td>
+      <td>{{ models.MODES[t.mode] }}</td>
+      <td class="muted">{{ t.updated_at.replace('T', ' ')[:16] }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="muted">None yet.</p>
+  {% endif %}
+  <p class="muted small">Saved in: {{ root }}</p>
+</div>
+{% endblock %}

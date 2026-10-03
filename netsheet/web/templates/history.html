@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}History — {{ tx.id }}{% endblock %}
+{% block nav %}<a href="{{ url_for('edit', tx_id=tx.id) }}">← Back to editing</a>{% endblock %}
+{% block content %}
+<h1>History (audit trail)</h1>
+<p class="muted">Every save, upload and PDF is recorded here, newest first. This log is only ever added to; entries are never changed or deleted.</p>
+<div class="card">
+<table class="lines">
+  <tr><th>When</th><th>What happened</th><th>Details</th></tr>
+  {% for e in entries %}
+  <tr>
+    <td style="white-space:nowrap">{{ e.at.replace('T', ' ') }}</td>
+    <td>{{ e.action.replace('_', ' ') }}</td>
+    <td class="small">
+      {% if e.changes %}
+        <ul>{% for c in e.changes %}<li><strong>{{ c.field }}</strong>{% if 'added' in c %} added: {{ c.added.text }}{% else %}: “{{ c['from'] if c['from'] is string else (c['from']|tojson) }}” → “{{ c.to if c.to is string else (c.to|tojson) }}”{% endif %}</li>{% endfor %}</ul>
+      {% else %}
+        {% for k, v in e.items() if k not in ('at', 'action') %}<div><strong>{{ k }}:</strong> {{ v }}</div>{% endfor %}
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# Never commit real client data
+Seller Net Sheets/
+test-data-output/

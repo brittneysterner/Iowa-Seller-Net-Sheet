@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m with context %}
+{% block title %}{{ tx.id }} — Seller Net Sheet{% endblock %}
+{% block nav %}
+  <a href="{{ url_for('results', tx_id=tx.id, view='agent') }}">Agent View</a>
+  <a href="{{ url_for('results', tx_id=tx.id, view='client') }}">Client View</a>
+  <a href="{{ url_for('compare', tx_id=tx.id) }}">Compare to Settlement</a>
+  <a href="{{ url_for('history', tx_id=tx.id) }}">History</a>
+{% endblock %}
+{% block content %}
+{% set listing = tx.mode == 'listing' %}
+{% set by_key = {} %}{% for ln in sheet.lines %}{% set _ = by_key.update({ln.key: ln}) %}{% endfor %}
+
+<h1>{{ tx.id }}</h1>
+<p class="muted">{{ models.MODES[tx.mode] }} · Every number you type is saved with the date and shown as “Entered by agent.”</p>
+
+{% if not listing %}
+<div class="card no-print">
+  <h2>Purchase Agreement</h2>
+  {% if tx.contract_file %}
+    <p>Copy on file: <strong>{{ tx.contract_file.stored_as }}</strong>
+      <span class="muted small">(from “{{ tx.contract_file.original_filename }}”, saved {{ tx.contract_file.uploaded_at.replace('T',' ')[:16] }}, read-only)</span></p>
+    <p><button class="secondary" data-toggle-pdf>Show / hide contract beside the form</button>
+       <a class="btn secondary" href="{{ url_for('contract_pdf', tx_id=tx.id) }}" target="_blank">Open in new tab</a></p>
+    <p class="muted small">Automatic contract reading is not turned on yet. Type each value below while looking at the contract.</p>
+  {% else %}
+    <p class="muted">Choose the executed Purchase Agreement PDF. The app saves a <strong>read-only copy</strong> in this net sheet's folder. Your original file is not moved or changed.</p>
+  {% endif %}
+  <form method="post" action="{{ url_for('upload_contract', tx_id=tx.id) }}" enctype="multipart/form-data">
+    <input type="file" name="contract" accept="application/pdf">
+    <button type="submit" class="small">{{ 'Upload another copy' if tx.contract_file else 'Upload PDF' }}</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="layout">
+<form id="main-form" method="post" action="{{ url_for('save', tx_id=tx.id) }}">
+
+  <!-- 1. Transaction information -->
+  <div class="card" id="facts">
+    <h2>1. Transaction information</h2>
+    <div class="grid">
+    {% for key, (label, kind) in models.FACTS.items() %}
+      {% if not (listing and key in ['buyers', 'earnest_money']) and kind != 'longtext' %}
+      {% set f = tx.facts[key] %}
+      {% set shown = 'Hypothetical sale price' if (listing and key == 'sale_price') else ('Estimated closing date' if (listing and key == 'closing_date') else label) %}
+      <div class="field">
+        <label>{{ shown }}
+          {% if f.source == 'contract' %}<span class="badge src">From contract{% if f.page %} p.{{ f.page }}{% endif %}</span>
+            {% if not f.confirmed %}<span class="badge review">NEEDS REVIEW</span>{% endif %}{% endif %}
+        </label>
+        <input type="{{ 'date' if kind == 'date' else 'text' }}" name="fact-{{ key }}" value="{{ f.value }}">
+        {% if f.source == 'contract' %}
+          {% if f.quote %}<div class="quote">“{{ f.quote }}”</div>{% endif %}
+          <label class="check"><input type="checkbox" name="fact-{{ key }}-confirmed" {% if f.confirmed %}checked{% endif %}> I checked this against the contract</label>
+        {% elif f.original_suggestion %}
+          <div class="muted small">Corrected by you. The contract reader suggested “{{ f.original_suggestion.value }}”.</div>
+        {% endif %}
+        {% if key == 'seller_paid_buyer_costs' %}
+          <div style="margin-top:4px">{{ m.status_select('seller_paid_buyer_costs_status', tx.seller_paid_buyer_costs_status) }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+    {% endfor %}
+    </div>
+    {% if not listing %}
+    <h3>Contract terms that may affect the seller</h3>
+    <div class="grid">
+    {% for key in ['other_concessions', 'personal_property', 'unusual_provisions'] %}
+      <div class="field"><label>{{ models.FACTS[key][0] }}</label>
+        <textarea name="fact-{{ key }}">{{ tx.facts[key].value }}</textarea></div>
+    {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if not listing %}
+  <!-- Review items -->
+  <div class="card" id="review">
+    <input type="hidden" name="review-present" value="1">
+    <h2>Items to review</h2>
+    <p class="muted small">Use this list for any contract language you want to decide on yourself. The app never interprets contract language for you.</p>
+    {% for item in tx.review_items %}
+      <div class="row-item">
+        <div>{% if not item.resolved %}<span class="badge review">NEEDS REVIEW</span>{% else %}<span class="badge act">RESOLVED</span>{% endif %}
+          {{ item.text }} {% if item.page %}<span class="muted small">(page {{ item.page }})</span>{% endif %}</div>
+        {% if item.quote %}<div class="quote">“{{ item.quote }}”</div>{% endif %}
+        <label class="check"><input type="checkbox" name="review-{{ item.id }}-resolved" {% if item.resolved %}checked{% endif %}> I've decided how to handle this</label>
+        <input type="text" name="review-{{ item.id }}-resolution" value="{{ item.resolution }}" placeholder="What did you decide?">
+      </div>
+    {% endfor %}
+    <div class="grid">
+      {{ m.text('review-new-text', '', 'Add an item to review', 'e.g. Seller to pay for roof repair, amount TBD') }}
+      {{ m.text('review-new-quote', '', 'Contract wording (optional)') }}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 2. Compensation -->
+  <div class="card" id="compensation">
+    <input type="hidden" name="commissions-present" value="1">
+    <h2>2. Real estate compensation</h2>
+    <p class="muted small">No rate is assumed. Add a line for each kind of compensation that applies.</p>
+    <div id="list-commission">{% for c in tx.commissions %}{{ m.commission_row(c) }}{% endfor %}</div>
+    <button class="secondary small" data-add="commission">+ Add compensation line</button>
+    {% for c in tx.commissions %}{% set ln = by_key.get('commission:' ~ c.id) %}
+      {% if ln %}<div class="small"><strong>{{ ln.label }}:</strong> {{ fmt(ln.amount, 'not calculated') }}</div>{{ m.math(ln) }}{% endif %}
+    {% endfor %}
+  </div>
+
+  <!-- 3. Payoffs -->
+  <div class="card" id="payoffs">
+    <input type="hidden" name="payoffs-present" value="1">
+    <h2>3. Mortgage &amp; lien payoffs</h2>
+    <p class="muted small">Add one line per loan, HELOC, judgment or lien. Good-through date and daily interest are optional.</p>
+    <div id="list-payoff">{% for p in tx.payoffs %}{{ m.payoff_row(p) }}{% endfor %}</div>
+    <button class="secondary small" data-add="payoff">+ Add payoff</button>
+    {% for p in tx.payoffs %}{{ m.math(by_key.get('payoff:' ~ p.id)) }}{% endfor %}
+  </div>
+
+  <!-- 4. Property taxes -->
+  <div class="card" id="ptax">
+    <input type="hidden" name="ptax-present" value="1">
+    <h2>4. Property taxes <span class="badge pending">CALCULATION PENDING</span></h2>
+    <div class="pending-box small">
+      <strong>The app does not calculate the Iowa property-tax proration yet.</strong>
+      The method will be set only after we review your Purchase Agreement form and check it against a closed
+      transaction. For now, type in the property-tax amount(s) the seller will pay or receive (for example, from the
+      closing attorney). They will be labeled “entered manually.”
+    </div>
+    <h3>Tax information (kept for your records and for future calculations)</h3>
+    <div class="grid">
+      {{ m.text('ptax-county', tx.property_tax.county, 'County', 'e.g. Winnebago') }}
+      {{ m.text('ptax-parcel', tx.property_tax.parcel, 'Parcel number') }}
+      {{ m.text('ptax-annual_net_tax', tx.property_tax.annual_net_tax, 'Last known annual net taxes ($)') }}
+      {{ m.text('ptax-tax_source', tx.property_tax.tax_source, 'Where you got it', 'e.g. County Treasurer website') }}
+      <div class="field"><label>Date you looked it up</label><input type="date" name="ptax-tax_retrieved" value="{{ tx.property_tax.tax_retrieved }}"></div>
+      {{ m.text('ptax-notes', tx.property_tax.notes, 'Notes (installments paid, exemptions, etc.)') }}
+    </div>
+    <h3>Property-tax amounts on this net sheet</h3>
+    <div id="list-ptax">{% for t in tx.property_tax.lines %}{{ m.ptax_row(t) }}{% endfor %}</div>
+    <button class="secondary small" data-add="ptax">+ Add property-tax amount</button>
+  </div>
+
+  <!-- 5. Transfer tax -->
+  <div class="card" id="transfer">
+    <input type="hidden" name="tt-present" value="1">
+    <h2>5. Iowa real estate transfer tax</h2>
+    <label class="check"><input type="checkbox" name="tt-include" {% if tx.transfer_tax.include %}checked{% endif %}> Include transfer tax as a seller expense</label>
+    {{ m.math(by_key.get('transfer_tax')) }}
+    <p class="muted small">Formula from Iowa Code §428A.1: $0.80 for each $500 (or part of $500) above the first $500.</p>
+    <label class="check"><input type="checkbox" name="tt-personal_property_flag" {% if tx.transfer_tax.personal_property_flag %}checked{% endif %}> The contract gives personal property a separate value (flag for review; the app will not change the calculation)</label>
+    <label class="check"><input type="checkbox" name="tt-exemption_flag" {% if tx.transfer_tax.exemption_flag %}checked{% endif %}> An exemption might apply (flag for review; the app will not apply one)</label>
+    <div class="grid" style="margin-top:8px">
+      {{ m.text('tt-actual_amount', tx.transfer_tax.actual_amount, 'Actual amount from settlement (optional, $)', '', 'Leave blank to use the calculated estimate.') }}
+      {{ m.text('tt-notes', tx.transfer_tax.notes, 'Notes (optional)') }}
+    </div>
+  </div>
+
+  <!-- 6. Abstract & deed -->
+  <div class="card" id="title">
+    <h2>6. Abstract continuation &amp; deed preparation</h2>
+    {% for key, label, who in [('abstract', 'Abstract continuation', 'Abstract company'), ('deed_prep', 'Deed preparation', 'Attorney / provider')] %}
+      <input type="hidden" name="{{ key }}-present" value="1">
+      {% set it = tx[key] %}
+      <h3>{{ label }} {{ m.status_badge(it.status) }}</h3>
+      <div class="grid">
+        {{ m.text(key ~ '-amount', it.amount, 'Amount ($)') }}
+        <div class="field"><label>Estimated or actual?</label>{{ m.status_select(key ~ '-status', it.status) }}</div>
+        {{ m.text(key ~ '-provider', it.provider, who ~ ' (optional)') }}
+        {{ m.text(key ~ '-notes', it.notes, 'Notes (optional)') }}
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- 7. Other costs -->
+  <div class="card" id="other">
+    <input type="hidden" name="other-present" value="1">
+    <h2>7. Other seller costs (optional)</h2>
+    <p class="muted small">Add only what applies. Click a suggestion or add your own.</p>
+    <div id="list-other">{% for o in tx.other_costs %}{{ m.other_row(o, 'other') }}{% endfor %}</div>
+    <p>{% for s in cost_suggestions %}<button class="secondary small" data-add="other" data-label="{{ s }}" style="margin:2px">+ {{ s }}</button> {% endfor %}
+       <button class="secondary small" data-add="other" style="margin:2px">+ Custom item</button></p>
+  </div>
+
+  <!-- 8. Credits -->
+  <div class="card" id="credits">
+    <input type="hidden" name="credits-present" value="1">
+    <h2>8. Credits to seller (optional)</h2>
+    <div id="list-credits">{% for c in tx.credits %}{{ m.other_row(c, 'credits', False) }}{% endfor %}</div>
+    <p>{% for s in credit_suggestions %}<button class="secondary small" data-add="credits" data-label="{{ s }}" style="margin:2px">+ {{ s }}</button> {% endfor %}</p>
+  </div>
+
+  <input type="hidden" name="next" value="edit" id="next-field">
+  <div class="savebar">
+    <button type="submit">Save</button>
+    <button type="submit" class="secondary" onclick="document.getElementById('next-field').value='results'">Save &amp; see net sheet</button>
+  </div>
+</form>
+
+<aside class="summary">
+  <div class="card">
+    <div class="net-box">
+      <div class="label">ESTIMATED NET TO SELLER</div>
+      <div class="value">{{ fmt(sheet.net) }}</div>
+      <div class="muted small">as of last save</div>
+    </div>
+    <p class="small" style="margin-top:10px">
+      {{ 'Hypothetical price' if listing else 'Price' }}: {{ fmt(sheet.price) }}<br>
+      Seller expenses: −{{ fmt(sheet.total_debits) }}<br>
+      Payoffs: −{{ fmt(sheet.total_payoffs) }}<br>
+      Credits: +{{ fmt(sheet.total_credits) }}
+    </p>
+    {% if sheet.warnings %}
+      <h3>Needs attention ({{ sheet.warnings|length }})</h3>
+      <ul class="warnings small">{% for w in sheet.warnings %}<li>{{ w }}</li>{% endfor %}</ul>
+    {% endif %}
+  </div>
+</aside>
+{% if tx.contract_file %}
+<div class="pdfpane"><iframe src="{{ url_for('contract_pdf', tx_id=tx.id) }}" title="Purchase Agreement"></iframe></div>
+{% endif %}
+</div>
+
+<template id="tpl-commission">{{ m.commission_row({'id': '__ID__', 'role': 'listing', 'method': 'percent', 'status': 'estimated'}) }}</template>
+<template id="tpl-payoff">{{ m.payoff_row({'id': '__ID__', 'status': 'estimated'}) }}</template>
+<template id="tpl-ptax">{{ m.ptax_row({'id': '__ID__', 'kind': 'debit', 'status': 'estimated'}) }}</template>
+<template id="tpl-other">{{ m.other_row({'id': '__ID__', 'status': 'estimated'}, 'other') }}</template>
+<template id="tpl-credits">{{ m.other_row({'id': '__ID__', 'status': 'estimated'}, 'credits', False) }}</template>
+{% endblock %}

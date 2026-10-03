@@ -1,0 +1,99 @@
+{% macro status_select(name, value) -%}
+<select name="{{ name }}">
+  <option value="estimated" {% if value != 'actual' %}selected{% endif %}>Estimated</option>
+  <option value="actual" {% if value == 'actual' %}selected{% endif %}>Actual</option>
+</select>
+{%- endmacro %}
+
+{% macro status_badge(status) -%}
+{% if status == 'actual' %}<span class="badge act">ACTUAL</span>{% else %}<span class="badge est">ESTIMATED</span>{% endif %}
+{%- endmacro %}
+
+{% macro text(name, value, label, placeholder='', hint='') -%}
+<div class="field"><label>{{ label }}</label>
+<input type="text" name="{{ name }}" value="{{ value or '' }}" placeholder="{{ placeholder }}">
+{% if hint %}<div class="muted small">{{ hint }}</div>{% endif %}</div>
+{%- endmacro %}
+
+{% macro commission_row(c) -%}
+{% set p = 'commissions-' ~ c.id %}
+<div class="row-item">
+  <input type="hidden" name="commissions-id" value="{{ c.id }}">
+  <div class="row-head"><strong>Compensation line</strong><button class="remove" data-remove>Remove</button></div>
+  <div class="grid">
+    <div class="field"><label>Type</label>
+      <select name="{{ p }}-role">
+        {% for k, v in models.COMMISSION_ROLES.items() %}<option value="{{ k }}" {% if c.role == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+      </select></div>
+    {{ text(p ~ '-label', c.label, 'Description (optional)', 'e.g. Listing brokerage') }}
+    <div class="field"><label>How it's calculated</label>
+      <select name="{{ p }}-method" data-method>
+        {% for k, v in METHODS.items() %}<option value="{{ k }}" {% if c.method == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+      </select></div>
+    <div class="field" data-pct><label>Percentage (%)</label><input type="text" name="{{ p }}-percent" value="{{ c.percent or '' }}" placeholder="e.g. 2.5"></div>
+    <div class="field" data-flat><label>Flat amount ($)</label><input type="text" name="{{ p }}-flat" value="{{ c.flat or '' }}" placeholder="e.g. 395"></div>
+    <div class="field"><label>Estimated or actual?</label>{{ status_select(p ~ '-status', c.status) }}</div>
+    {{ text(p ~ '-payee', c.payee, 'Paid to (optional)') }}
+    {{ text(p ~ '-notes', c.notes, 'Notes (optional)') }}
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro payoff_row(p_) -%}
+{% set p = 'payoffs-' ~ p_.id %}
+<div class="row-item">
+  <input type="hidden" name="payoffs-id" value="{{ p_.id }}">
+  <div class="row-head"><strong>Payoff</strong><button class="remove" data-remove>Remove</button></div>
+  <div class="grid">
+    {{ text(p ~ '-lender', p_.lender, 'Lender / lienholder', 'e.g. First mortgage – ABC Bank') }}
+    {{ text(p ~ '-amount', p_.amount, 'Payoff amount ($)') }}
+    <div class="field"><label>Estimated or actual?</label>{{ status_select(p ~ '-status', p_.status) }}</div>
+    <div class="field"><label>Good-through date (optional)</label><input type="date" name="{{ p }}-good_through" value="{{ p_.good_through or '' }}"></div>
+    {{ text(p ~ '-per_diem', p_.per_diem, 'Daily interest / per diem (optional, $)') }}
+    {{ text(p ~ '-notes', p_.notes, 'Notes (optional)') }}
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro other_row(o, prefix, with_provider=True) -%}
+{% set p = prefix ~ '-' ~ o.id %}
+<div class="row-item">
+  <input type="hidden" name="{{ prefix }}-id" value="{{ o.id }}">
+  <div class="row-head"><strong>{{ 'Credit' if prefix == 'credits' else 'Cost' }}</strong><button class="remove" data-remove>Remove</button></div>
+  <div class="grid">
+    <div class="field"><label>Description</label><input type="text" data-role="label" name="{{ p }}-label" value="{{ o.label or '' }}"></div>
+    {{ text(p ~ '-amount', o.amount, 'Amount ($)') }}
+    <div class="field"><label>Estimated or actual?</label>{{ status_select(p ~ '-status', o.status) }}</div>
+    {% if with_provider %}{{ text(p ~ '-provider', o.provider, 'Provider / paid to (optional)') }}{% endif %}
+    {{ text(p ~ '-notes', o.notes, 'Notes (optional)') }}
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro ptax_row(t) -%}
+{% set p = 'ptaxline-' ~ t.id %}
+<div class="row-item">
+  <input type="hidden" name="ptaxline-id" value="{{ t.id }}">
+  <div class="row-head"><strong>Property-tax amount (entered manually)</strong><button class="remove" data-remove>Remove</button></div>
+  <div class="grid">
+    {{ text(p ~ '-label', t.label, 'Description', 'e.g. Taxes per closing attorney') }}
+    {{ text(p ~ '-amount', t.amount, 'Amount ($)') }}
+    <div class="field"><label>Seller pays or receives?</label>
+      <select name="{{ p }}-kind">
+        <option value="debit" {% if t.kind != 'credit' %}selected{% endif %}>Seller pays (debit)</option>
+        <option value="credit" {% if t.kind == 'credit' %}selected{% endif %}>Seller receives (credit)</option>
+      </select></div>
+    <div class="field"><label>Estimated or actual?</label>{{ status_select(p ~ '-status', t.status) }}</div>
+    {{ text(p ~ '-notes', t.notes, 'Where this number came from') }}
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro math(line) -%}
+{% if line and (line.steps or line.flags) %}
+<ul class="math">
+  {% for s in line.steps %}<li>{{ s }}</li>{% endfor %}
+  {% for f in line.flags %}<li style="color:#8a4b00">{{ f }}</li>{% endfor %}
+</ul>
+{% endif %}
+{%- endmacro %}
