@@ -47,6 +47,41 @@ form ¶9 with possession on July 31, 2026:
 | One annual amount × 13 months ÷ 12 | $4,976.01 |
 | Two different annual amounts (Part A uses one bill, Part B uses the other) | depends on both county bills |
 
-**Needed to finish:** the Cerro Gordo County Treasurer's net tax amounts for this parcel for taxes payable
-2025-26 (Sept 2025 / Mar 2026) and 2026-27 (Sept 2026 / Mar 2027). Whichever method reproduces $5,390.68 from the
-real bills shows which reading of ¶9 ("prior fiscal year") and which day-count the closing attorney used.
+### Update 2026-10-27: county tax history received
+
+Source: county treasurer's parcel tax history (screenshot from the agent, viewed 2026-10-27).
+
+| Tax year | Payable | Installments | Annual |
+|---|---|---|---|
+| 2024 | Sept 2025 / Mar 2026 (fiscal year 2025-26) | $2,488 + $2,488, both paid by the seller before closing | **$4,976** |
+| 2025 | Sept 2026 / Mar 2027 (fiscal year 2026-27) | $2,432 + $2,432; first paid 9/28/2026 (after closing), second still due | **$4,864** |
+
+Every combination tested against the settlement figure of $5,390.68:
+
+| Method | Result | Difference |
+|---|---|---|
+| **$4,976 × 13 months ÷ 12** (2024 bill for all 13 months) | **$5,390.67** | **−$0.01** |
+| $4,976 + $4,864 × 31 ÷ 365 | $5,389.11 | −$1.57 |
+| $4,976 × 396 ÷ 365 (daily) | $5,398.62 | +$7.94 |
+| $4,976 + $4,864 ÷ 12 | $5,381.33 | −$9.35 |
+| $4,864 + July at either rate (2025 bill for the full year) | $5,277–$5,287 | about −$104 to −$114 |
+| $4,864 × 13 months ÷ 12 | $5,269.33 | −$121.35 |
+
+**Finding:** the closing attorney charged the seller **13 months (July 2025 – July 2026) at the 2024 tax bill
+($4,976 a year), counted in whole months.** That bill is the one "certified and payable in the prior fiscal year,"
+so this matches **Reading A** of ¶9. The 1-cent gap is most likely because county bills are rounded to whole dollars:
+an unrounded annual tax of about $4,976.01 gives exactly $5,390.68. A 1982 Iowa act required tax bills to be
+rounded to the nearest even dollar; whether that is still current law was not verified.
+
+**Observation (not an interpretation):** the 2025 bill that actually came due after closing was $4,864, which is
+$112 a year lower. It was probably not issued yet on July 31, 2026, because Iowa tax statements usually come out in
+August. The settlement statement shows no later adjustment.
+
+**What this transaction can't show,** because possession fell on the last day of a month and in July:
+1. How a **partial month** is counted (for example, possession on the 15th): by days, or by a 30-day month?
+2. Possession **after September**, when the seller has already paid the first installment of the new bill.
+3. Possession **March–June**, when both installments are already paid.
+4. Whether the attorney switches to the **new bill once it is issued** (August onward).
+
+**Next:** one or two more closed transactions with mid-month possession, ideally one between October and February
+and one between March and June.
