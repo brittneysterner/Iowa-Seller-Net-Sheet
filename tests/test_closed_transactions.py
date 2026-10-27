@@ -32,6 +32,19 @@ def _closed_1():
     return tx
 
 
+def test_closed_1_property_tax_calculation_matches_settlement():
+    """HUD 511: County taxes 07/01/25 to 07/31/26 = $5,390.68 (attorney closing).
+    County bills (whole dollars): 2024 taxes $4,976 paid Sept 2025/Mar 2026; 2025 taxes not yet issued."""
+    tx = _closed_1()
+    tx["property_tax"]["lines"] = []
+    tx["property_tax"].update(basis_bill="4976", first_paid="unpaid", second_paid="unpaid")
+    s = compute(tx)
+    auto = sum(ln.amount for ln in s.lines if ln.key.startswith("ptax_auto"))
+    assert auto == D("5390.67")
+    assert abs(auto - D("5390.68")) <= D("0.01")  # 1 cent: county rounds bills to whole dollars
+    assert abs(s.net - D("359581.06")) <= D("0.01")
+
+
 def test_closed_1_transfer_tax_matches_revenue_stamps():
     assert calculate_transfer_tax(D("610000")).amount == D("975.20")  # HUD 1202
 

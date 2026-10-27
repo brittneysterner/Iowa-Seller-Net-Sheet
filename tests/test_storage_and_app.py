@@ -120,7 +120,7 @@ def test_web_flow(client, data_dir):
         page = client.get(f"/t/{tx_id}/results?view={view}")
         assert page.status_code == 200 and b"ESTIMATED NET PROCEEDS" in page.data
     agent = client.get(f"/t/{tx_id}/results?view=agent").data
-    assert b"428A.1" in agent and b"NOT calculated" in agent
+    assert b"428A.1" in agent and b"360-day year" in agent
     client_view = client.get(f"/t/{tx_id}/results?view=client").data
     assert b"428A.1" not in client_view  # no technical clutter for the client
 

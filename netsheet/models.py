@@ -101,6 +101,25 @@ def blank_fact() -> dict:
     return {"value": "", "source": "manual", "page": None, "quote": None, "confirmed": True, "updated_at": None}
 
 
+def blank_property_tax() -> dict:
+    return {
+        "method": "calculate",          # "calculate" (form ¶9) or "manual"
+        "county": "",
+        "parcel": "",
+        "basis_bill": "",               # annual bill payable in the fiscal year BEFORE possession
+        "current_bill": "",             # annual bill payable in the possession fiscal year, if issued
+        "first_paid": "unknown",        # September installment of the current bill
+        "second_paid": "unknown",       # March installment of the current bill
+        "convention": "360",            # "360" (30-day months) or "365" (actual days)
+        "possession_day": "seller",     # who is charged for the possession day
+        "not_full_assessment": False,   # ¶9 special case — must be entered manually
+        "tax_source": "",
+        "tax_retrieved": "",
+        "notes": "",
+        "lines": [],                    # additional / manual tax amounts
+    }
+
+
 def blank_line(**extra) -> dict:
     line = {"id": new_id(), "label": "", "amount": "", "status": "estimated", "provider": "", "notes": ""}
     line.update(extra)
@@ -122,15 +141,7 @@ def new_transaction(mode: str, folder_name: str) -> dict:
         "review_items": [],
         "commissions": [],
         "payoffs": [],
-        "property_tax": {
-            "county": "",
-            "parcel": "",
-            "annual_net_tax": "",
-            "tax_source": "",
-            "tax_retrieved": "",
-            "notes": "",
-            "lines": [],
-        },
+        "property_tax": blank_property_tax(),
         "transfer_tax": {
             "include": True,
             "personal_property_flag": False,

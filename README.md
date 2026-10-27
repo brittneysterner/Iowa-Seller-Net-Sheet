@@ -13,7 +13,9 @@ Nothing is sent over the internet. Nothing is sent to clients. Your files stay o
   and brokerage/admin fees. No rate is assumed. Choose percentage, flat amount, or both.
 - **Payoffs:** as many as you need. Good-through date and daily interest are optional.
 - **Iowa transfer tax:** calculated automatically, with every step of the math shown (Iowa Code §428A.1).
-- **Property taxes:** **calculation not built yet, on purpose.** You type the amounts in. They're labeled "entered manually."
+- **Property taxes:** calculated from your Purchase Agreement's ¶9 and the county tax bills, with all the math
+  shown and labeled ESTIMATED. Settings for 360 or 365 days and who is charged for the possession day. Or enter the
+  amounts yourself.
 - **Abstract continuation and deed preparation:** each has its own line, with an optional provider name.
 - **Optional costs and credits:** click a suggestion (septic inspection, home warranty, repairs, etc.)
   or add your own. Nothing appears unless you add it.
@@ -44,7 +46,6 @@ See **[docs/CALCULATIONS-AND-SOURCES.md](docs/CALCULATIONS-AND-SOURCES.md)**.
 ## Not built yet (future phases)
 
 - AI-assisted contract reading. The slot for it is built, and suggestions will always need your approval.
-- Iowa property-tax proration. Waiting on your Purchase Agreement form and a closed-transaction test.
 - Brokerage branding on the client PDF.
 - Google Drive, county tax lookups, email. **The app does not access any of these.**
 
@@ -52,4 +53,4 @@ See **[docs/CALCULATIONS-AND-SOURCES.md](docs/CALCULATIONS-AND-SOURCES.md)**.
 
 Python 3.11+, Flask, ReportLab. Run the self-checks with `uv run pytest`. Start with `uv run python -m netsheet`.
 All money math uses `Decimal`. The calculation code is in `netsheet/calculations/` and has no web or file-system
-dependencies. Property-tax proration (`property_tax.py`) intentionally raises until the method is approved.
+dependencies. Property-tax proration (`property_tax.py`) follows the Iowa REALTORS® form ¶9; see docs/CALCULATIONS-AND-SOURCES.md.

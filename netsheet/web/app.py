@@ -7,6 +7,7 @@ from decimal import Decimal
 from flask import Flask, abort, flash, redirect, render_template, request, send_file, url_for
 
 from .. import models, storage
+from ..calculations import property_tax
 from ..calculations.commission import METHODS
 from ..calculations.net_proceeds import SECTIONS, compute
 from ..money import MoneyError, fmt, parse_money
@@ -61,7 +62,13 @@ def new():
 def edit(tx_id):
     tx = _load_or_404(tx_id)
     sheet = compute(tx)
+    try:
+        poss = models.parse_date(tx["facts"]["possession_date"]["value"]) or \
+            models.parse_date(tx["facts"]["closing_date"]["value"])
+    except ValueError:
+        poss = None
     return render_template("edit.html", tx=tx, sheet=sheet, outputs=storage.list_outputs(tx_id),
+                           bill_labels=property_tax.bill_labels(poss), PAID_CHOICES=property_tax.PAID_CHOICES,
                            cost_suggestions=models.OTHER_COST_SUGGESTIONS,
                            credit_suggestions=models.CREDIT_SUGGESTIONS)
 
@@ -143,8 +150,16 @@ def apply_form(tx: dict, form) -> tuple[list[dict], list[str]]:
 
     if "ptax-present" in form:
         pt = dict(tx["property_tax"])
-        for f in ("county", "parcel", "annual_net_tax", "tax_source", "tax_retrieved", "notes"):
+        for f in ("county", "parcel", "basis_bill", "current_bill", "tax_source", "tax_retrieved", "notes"):
             pt[f] = form.get(f"ptax-{f}", "").strip()
+        pt["method"] = "manual" if form.get("ptax-method") == "manual" else "calculate"
+        pt["convention"] = "365" if form.get("ptax-convention") == "365" else "360"
+        pt["possession_day"] = "buyer" if form.get("ptax-possession_day") == "buyer" else "seller"
+        for f in ("first_paid", "second_paid"):
+            v = form.get(f"ptax-{f}", "unknown")
+            pt[f] = v if v in ("paid", "unpaid", "unknown") else "unknown"
+        pt["not_full_assessment"] = form.get("ptax-not_full_assessment") == "on"
+        pt.pop("annual_net_tax", None)
         pt["lines"] = _rows(form, "ptaxline", ["label", "amount", "kind", "status", "notes"])
         _diff(changes, "property_tax", tx["property_tax"], pt)
         tx["property_tax"] = pt

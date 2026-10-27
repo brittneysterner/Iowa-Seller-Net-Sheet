@@ -96,6 +96,11 @@ def load(tx_id: str) -> dict:
     tx = json.loads((tx_dir(tx_id) / DATA_FILE).read_text())
     for key in models.FACTS:  # records saved before a field existed get it blank
         tx["facts"].setdefault(key, models.blank_fact())
+    pt = tx.setdefault("property_tax", {})
+    for key, value in models.blank_property_tax().items():
+        pt.setdefault(key, value)
+    if pt.get("annual_net_tax") and not pt.get("basis_bill"):
+        pt["basis_bill"] = pt["annual_net_tax"]  # field renamed in v0.2
     return tx
 
 

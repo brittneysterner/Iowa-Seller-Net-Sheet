@@ -101,10 +101,63 @@ def test_payoff_warns_when_per_diem_missing():
     assert r.amount == D("120000.00") and r.flags
 
 
-# ---------------------------------------------------------------- property tax: must stay pending
-def test_property_tax_proration_is_not_implemented():
-    with pytest.raises(property_tax.ProrationMethodNotApproved):
-        property_tax.calculate_proration()
+# ---------------------------------------------------------------- property tax (form ¶9)
+def _auto(res):
+    return {ln.key: ln.amount for ln in res.lines}
+
+
+def test_fiscal_year_start():
+    assert property_tax.fiscal_year_start(date(2026, 7, 1)) == 2026
+    assert property_tax.fiscal_year_start(date(2027, 6, 30)) == 2026
+
+
+@pytest.mark.parametrize("poss,seller,conv,days", [
+    (date(2026, 7, 31), True, "360", 30),
+    (date(2026, 7, 31), True, "365", 31),
+    (date(2026, 10, 15), True, "360", 105),
+    (date(2026, 10, 15), False, "360", 104),
+    (date(2026, 8, 31), True, "360", 60),     # 31st counts as 30 under 30-day months
+    (date(2027, 2, 28), True, "360", 238),    # 7 full months + 28
+    (date(2026, 7, 1), True, "360", 1),
+    (date(2026, 7, 1), False, "360", 0),
+    (date(2027, 6, 30), True, "365", 365),
+])
+def test_seller_days(poss, seller, conv, days):
+    assert property_tax.seller_days(poss, seller, conv)[0] == days
+
+
+def test_proration_october_example():
+    # Possession Oct 15, 2026; prior-year bill $4,976; new bill $4,864 issued; Sept paid, March not.
+    res = property_tax.calculate_proration(date(2026, 10, 15), D("4976"), D("4864"), "paid", "unpaid")
+    assert _auto(res) == {"ptax_auto_second": D("2432.00"), "ptax_auto_proration": D("1451.33")}
+    assert next(ln for ln in res.lines if ln.key == "ptax_auto_second").status == "actual"
+    assert not res.warnings
+
+
+def test_proration_unknown_paid_status_is_charged_and_flagged():
+    res = property_tax.calculate_proration(date(2026, 10, 15), D("4976"), D("4864"))
+    assert sum(_auto(res).values()) == D("4864") + D("1451.33")
+    assert len(res.warnings) == 2 and all(ln.status == "estimated" for ln in res.lines)
+
+
+def test_proration_estimates_current_bill_when_not_issued():
+    res = property_tax.calculate_proration(date(2026, 7, 31), D("4976"), None, "unpaid", "unpaid")
+    a = _auto(res)
+    assert a["ptax_auto_first"] == D("2488.00") and a["ptax_auto_second"] == D("2488.00")
+    assert all(ln.status == "estimated" for ln in res.lines)
+
+
+def test_proration_odd_cent_bill_halves_sum_exactly():
+    res = property_tax.calculate_proration(date(2026, 7, 31), D("4976.01"), None, "unpaid", "unpaid")
+    a = _auto(res)
+    assert a["ptax_auto_first"] + a["ptax_auto_second"] == D("4976.01")
+
+
+def test_proration_spring_possession_warns_if_unpaid():
+    res = property_tax.calculate_proration(date(2027, 5, 10), D("4976"), D("4864"), "paid", "unpaid")
+    assert not any("April and June" in w for w in res.warnings)
+    res2 = property_tax.calculate_proration(date(2027, 5, 10), D("4976"), D("4864"), "unpaid", "unpaid")
+    assert any("April and June" in w for w in res2.warnings)
 
 
 # ---------------------------------------------------------------- full net sheet
@@ -139,6 +192,33 @@ def test_full_net_sheet():
     # earnest money is informational only
     assert any("Earnest money" in i for i in s.info)
     assert not s.input_errors
+
+
+def test_tax_needs_inputs_instead_of_guessing():
+    s = compute(_tx())
+    assert any("Property taxes not calculated yet" in w for w in s.warnings)
+    assert not any(ln.key.startswith("ptax_auto") for ln in s.lines)
+
+
+def test_tax_special_case_and_manual_mode_skip_calculation():
+    tx = _tx()
+    tx["property_tax"]["basis_bill"] = "4976"
+    tx["property_tax"]["not_full_assessment"] = True
+    s = compute(tx)
+    assert not any(ln.key.startswith("ptax_auto") for ln in s.lines)
+    assert any("special case" in w for w in s.warnings)
+    tx["property_tax"]["not_full_assessment"] = False
+    tx["property_tax"]["method"] = "manual"
+    assert not any(ln.key.startswith("ptax_auto") for ln in compute(tx).lines)
+
+
+def test_tax_uses_closing_date_when_no_possession_date():
+    tx = _tx()  # closing 2026-10-30, no possession date
+    tx["property_tax"].update(basis_bill="3600", first_paid="paid", second_paid="paid")
+    s = compute(tx)
+    pr = next(ln for ln in s.lines if ln.key == "ptax_auto_proration")
+    assert pr.amount == D("1200.00")  # 3600 x (3x30 + 30) / 360
+    assert any("closing date was used" in i for i in s.info)
 
 
 def test_blank_amounts_are_excluded_and_warned_not_guessed():
@@ -188,4 +268,4 @@ def test_listing_mode_without_closing_date_is_info_not_warning():
     tx["facts"]["sale_price"]["value"] = "300000"
     s = compute(tx)
     assert any("closing date" in i for i in s.info)
-    assert not any("closing date" in w.lower() for w in s.warnings)
+    assert not any(w.startswith("No closing date") for w in s.warnings)

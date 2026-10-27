@@ -40,32 +40,34 @@ and closing is after the good-through date, does the app add:
 `(closing date − good-through date) in days × daily interest`.
 That line is then always marked ESTIMATED. The lender's final payoff statement controls.
 
-## Iowa property-tax proration — PENDING (not calculated)
+## Iowa property-tax proration — ESTIMATE (built 2026-10-27 at the agent's request)
 
-Iowa proration is governed by the wording of the Purchase Agreement. Per your instruction, the app
-does **not** calculate it until:
+Built from the evidence available, without further sample contracts (the agent's decision):
+the Iowa REALTORS® form ¶9 ([review](PURCHASE-AGREEMENT-REVIEW.md)), closed transaction #1, an attorney closing
+([validation](VALIDATION-CLOSED-TRANSACTION-1.md)), and the 360-day-year convention common in licensing courses.
+Code: `netsheet/calculations/property_tax.py`.
 
-1. we review the Purchase Agreement form you use,
-2. we test the method against a closed transaction's final settlement statement, and
-3. you approve the method.
+1. **Fiscal year of possession:** the July 1 – June 30 year containing the **possession date**. If no possession date
+   is entered, the closing date is used (form ¶4: possession at closing).
+2. **Bill due after possession** (¶9, "taxes due and payable in the fiscal year in which possession is given"): the
+   bill due in September and March of that fiscal year. Each installment the seller hasn't paid is charged to the seller.
+   If that bill isn't entered yet (counties usually issue it in August), it is **estimated from the prior-year bill**.
+   If an installment's paid status is "Not sure," it is charged and flagged.
+3. **Proration** (¶9, prorated "as of the date of possession," based on "the taxes that were certified and payable
+   in the prior fiscal year"): prior-year bill × seller days ÷ 360.
+   - **360 setting (default):** 30 days for each full month since July 1, plus the day of the month, up to 30.
+   - **365 setting:** actual calendar days ÷ 365.
+   - **Possession day:** counted as the seller's by default. Can be switched to buyer.
+4. **¶9 special case** (taxes not based on a full assessment of current improvements, e.g. new construction):
+   **not calculated.** The agent enters the amount manually.
+5. You can always choose **"I'll enter the amounts myself"** instead, and add extra tax lines, such as delinquent
+   taxes, either way.
 
-Until then, you type in the property-tax amount(s). They are labeled "entered manually — not calculated by this app."
+Everything is labeled **ESTIMATED** except installments taken from an entered county bill. Closing agents
+(attorneys, Escrow Plus, lenders) may calculate slightly differently, for example by actual days.
 
-Different settlement agents (closing attorneys, Escrow Plus, lenders) may prorate differently, so each net sheet
-records who the settlement agent is. Closed transaction #1 (an attorney closing) matched "13 whole months at the
-prior-year bill"; see [VALIDATION-CLOSED-TRANSACTION-1.md](VALIDATION-CLOSED-TRANSACTION-1.md).
-
-Step 1 is done: see [PURCHASE-AGREEMENT-REVIEW.md](PURCHASE-AGREEMENT-REVIEW.md) for the form's exact ¶9 wording
-and the two possible readings of "prior fiscal year." Steps 2 and 3 are still open.
-
-Questions to settle during that review:
-- ~~Closing date or possession date?~~ **Possession date** (form ¶9).
-- Is the closing day a seller day or a buyer day?
-- Is the daily rate based on a 365-day year or the actual number of days?
-- Which tax amount is used: "last known actual net taxes," or something else?
-- How are unpaid September and March installments handled?
-- How are the seller's homestead, military, or other exemptions treated? This includes the 2026 change
-  (SF 2472) that replaces the homestead credit with a homestead exemption, starting with taxes paid in September 2027.
+**Check against closed transaction #1:** the app gives $2,488.00 + $2,488.00 + $414.67 = **$5,390.67**. The settlement
+statement shows **$5,390.68**, a 1-cent difference from county bills being rounded to whole dollars.
 
 ## Audit trail
 

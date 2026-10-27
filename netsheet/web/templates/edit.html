@@ -127,23 +127,53 @@
   <!-- 4. Property taxes -->
   <div class="card" id="ptax">
     <input type="hidden" name="ptax-present" value="1">
-    <h2>4. Property taxes <span class="badge pending">CALCULATION PENDING</span></h2>
-    <div class="pending-box small">
-      <strong>The app does not calculate the Iowa property-tax proration yet.</strong>
-      The method will be set only after we review your Purchase Agreement form and check it against a closed
-      transaction. For now, type in the property-tax amount(s) the seller will pay or receive (for example, from the
-      closing attorney). They will be labeled “entered manually.”
-    </div>
-    <h3>Tax information (kept for your records and for future calculations)</h3>
+    <h2>4. Property taxes</h2>
+    {% set pt = tx.property_tax %}
     <div class="grid">
-      {{ m.text('ptax-county', tx.property_tax.county, 'County', 'e.g. Winnebago') }}
-      {{ m.text('ptax-parcel', tx.property_tax.parcel, 'Parcel number') }}
-      {{ m.text('ptax-annual_net_tax', tx.property_tax.annual_net_tax, 'Last known annual net taxes ($)') }}
-      {{ m.text('ptax-tax_source', tx.property_tax.tax_source, 'Where you got it', 'e.g. County Treasurer website') }}
-      <div class="field"><label>Date you looked it up</label><input type="date" name="ptax-tax_retrieved" value="{{ tx.property_tax.tax_retrieved }}"></div>
-      {{ m.text('ptax-notes', tx.property_tax.notes, 'Notes (installments paid, exemptions, etc.)') }}
+      <label class="check"><input type="radio" name="ptax-method" value="calculate" {% if pt.method != 'manual' %}checked{% endif %}>
+        <span><strong>Calculate for me</strong><br><span class="muted small">Uses your Purchase Agreement ¶9 and the county tax bills</span></span></label>
+      <label class="check"><input type="radio" name="ptax-method" value="manual" {% if pt.method == 'manual' %}checked{% endif %}>
+        <span><strong>I'll enter the amounts myself</strong><br><span class="muted small">e.g. figures from the closing agent</span></span></label>
     </div>
-    <h3>Property-tax amounts on this net sheet</h3>
+    <h3>Tax bills (from the County Treasurer)</h3>
+    <div class="grid">
+      {{ m.text('ptax-basis_bill', pt.basis_bill, bill_labels.basis ~ ' ($)', 'e.g. 4976', 'Both installments added together. This is the basis for the proration.') }}
+      {{ m.text('ptax-current_bill', pt.current_bill, bill_labels.current ~ ' ($)', 'Leave blank if not issued yet') }}
+      <div class="field"><label>{{ bill_labels.first }} paid by seller?</label>
+        <select name="ptax-first_paid">{% for k, v in PAID_CHOICES.items() %}<option value="{{ k }}" {% if pt.first_paid == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+      <div class="field"><label>{{ bill_labels.second }} paid by seller?</label>
+        <select name="ptax-second_paid">{% for k, v in PAID_CHOICES.items() %}<option value="{{ k }}" {% if pt.second_paid == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+    </div>
+    <p class="muted small">Bill names update after you save a possession or closing date.</p>
+    <h3>Settings</h3>
+    <div class="grid">
+      <div class="field"><label>Count days using</label>
+        <select name="ptax-convention">
+          <option value="360" {% if pt.convention != '365' %}selected{% endif %}>360-day year, 30-day months (licensing-course method)</option>
+          <option value="365" {% if pt.convention == '365' %}selected{% endif %}>365-day year, actual days</option>
+        </select></div>
+      <div class="field"><label>Possession day is charged to</label>
+        <select name="ptax-possession_day">
+          <option value="seller" {% if pt.possession_day != 'buyer' %}selected{% endif %}>Seller</option>
+          <option value="buyer" {% if pt.possession_day == 'buyer' %}selected{% endif %}>Buyer</option>
+        </select></div>
+    </div>
+    <label class="check"><input type="checkbox" name="ptax-not_full_assessment" {% if pt.not_full_assessment %}checked{% endif %}>
+      Taxes are not based on a full assessment of current improvements, e.g. new construction (form ¶9 special case; enter the amount manually)</label>
+    {% for ln in sheet.lines if ln.key.startswith('ptax_auto') %}
+      <div class="small" style="margin-top:8px"><strong>{{ ln.label }}:</strong> {{ fmt(ln.amount) }}
+        {% if ln.is_estimated %}<span class="badge est">ESTIMATED</span>{% else %}<span class="badge act">ACTUAL</span>{% endif %}</div>{{ m.math(ln) }}
+    {% endfor %}
+    <h3>Record keeping</h3>
+    <div class="grid">
+      {{ m.text('ptax-county', pt.county, 'County', 'e.g. Winnebago') }}
+      {{ m.text('ptax-parcel', pt.parcel, 'Parcel number') }}
+      {{ m.text('ptax-tax_source', pt.tax_source, 'Where you got the tax figures', 'e.g. County Treasurer website') }}
+      <div class="field"><label>Date you looked them up</label><input type="date" name="ptax-tax_retrieved" value="{{ pt.tax_retrieved }}"></div>
+      {{ m.text('ptax-notes', pt.notes, 'Notes (exemptions, delinquencies, etc.)') }}
+    </div>
+    <h3>Additional or manually entered tax amounts</h3>
+    <p class="muted small">For example: delinquent prior-year taxes, or the closing agent's figure if you chose to enter amounts yourself.</p>
     <div id="list-ptax">{% for t in tx.property_tax.lines %}{{ m.ptax_row(t) }}{% endfor %}</div>
     <button class="secondary small" data-add="ptax">+ Add property-tax amount</button>
   </div>

@@ -174,7 +174,7 @@ def build_pdf(sheet: NetSheet, view: str = "client", generated: datetime | None 
     if agent:
         story.append(Spacer(1, 10))
         story.append(Paragraph("Review items, warnings & assumptions", st["h2"]))
-        story.append(Paragraph(_esc(sheet.tax_pending_message), st["warn"]))
+        story.append(Paragraph(_esc(sheet.tax_note), st["warn"]))
         for w in sheet.warnings:
             story.append(Paragraph("• " + _esc(w), st["warn"]))
         for i in sheet.info:

@@ -55,7 +55,7 @@
 
   {% if agent %}
   <h3>Warnings, review items &amp; assumptions</h3>
-  <div class="pending-box small">{{ sheet.tax_pending_message }}</div>
+  <div class="pending-box small">{{ sheet.tax_note }}</div>
   <ul class="warnings small">{% for w in sheet.warnings %}<li>{{ w }}</li>{% endfor %}</ul>
   <ul class="small muted">{% for i in sheet.info %}<li>{{ i }}</li>{% endfor %}
     <li>All figures use exact decimal arithmetic; each line is rounded to the cent. Blank amounts are left out of totals, never estimated by the app.</li></ul>

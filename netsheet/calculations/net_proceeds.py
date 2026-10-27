@@ -74,7 +74,7 @@ class NetSheet:
     warnings: list[str]
     info: list[str]
     input_errors: list[str]
-    tax_pending_message: str
+    tax_note: str
 
     def section_lines(self, section: str) -> list[Line]:
         return [ln for ln in self.lines if ln.section == section]
@@ -195,8 +195,41 @@ def compute(tx: dict) -> NetSheet:
             warnings.append(f"{label}: {f}")
         lines.append(ln)
 
-    # --- Property taxes (manual only; proration calculation pending) ---------------
+    # --- Property taxes ------------------------------------------------------------
     pt = tx.get("property_tax", {})
+    if pt.get("method", "calculate") == "calculate":
+        if pt.get("not_full_assessment"):
+            warnings.append(
+                "Form ¶9 special case marked (taxes not based on a full assessment of current improvements). "
+                "The app does not calculate this case. Enter the property-tax amount manually."
+            )
+        else:
+            basis = _money(pt.get("basis_bill"), "Prior-year tax bill", errors)
+            current = _money(pt.get("current_bill"), "Current-year tax bill", errors)
+            poss = possession or closing
+            if basis is None or poss is None:
+                missing = []
+                if basis is None:
+                    missing.append("the prior-year tax bill")
+                if poss is None:
+                    missing.append("a possession or closing date")
+                warnings.append("Property taxes not calculated yet: enter " + " and ".join(missing) + ".")
+            else:
+                res = property_tax.calculate_proration(
+                    poss, basis, current,
+                    first_paid=pt.get("first_paid", "unknown"), second_paid=pt.get("second_paid", "unknown"),
+                    convention=pt.get("convention", "360"),
+                    possession_day_to_seller=pt.get("possession_day", "seller") != "buyer",
+                    possession_is_closing_date=possession is None,
+                )
+                for tl in res.lines:
+                    lines.append(Line(
+                        key=tl.key, section="taxes", label=tl.label, amount=tl.amount, kind="debit",
+                        status=tl.status, source=f"Calculated by app — {property_tax.METHOD_NAME}",
+                        steps=tl.steps,
+                    ))
+                warnings.extend(res.warnings)
+                info.extend(res.info)
     for t in pt.get("lines", []):
         label = t.get("label") or "Property taxes"
         amt = _money(t.get("amount"), label, errors)
@@ -204,17 +237,23 @@ def compute(tx: dict) -> NetSheet:
         ln = Line(
             key=f"ptax:{t['id']}", section="taxes", label=label, amount=amt, kind=kind,
             status=_status(t.get("status")),
-            source="Entered manually by agent — NOT calculated by this app",
+            source="Entered manually by agent",
             notes=t.get("notes", ""),
-            steps=["Amount entered manually. Property-tax proration calculation is pending approval."],
+            steps=["Amount entered manually by the agent."],
         )
         if amt is None:
             warnings.append(f"{label}: no amount entered (not included in totals).")
         lines.append(ln)
-    if not any(_money(t.get("amount"), "", []) is not None for t in pt.get("lines", [])):
+    tax_lines = [ln for ln in lines if ln.section == "taxes" and ln.key.startswith("ptax") and ln.amount is not None]
+    if not tax_lines:
         warnings.append(
-            "No property-tax amount entered. In Iowa the seller usually owes taxes at closing, so this "
+            "No property-tax amount on this net sheet. In Iowa the seller usually owes taxes at closing, so this "
             "net is likely OVERSTATED until property taxes are added."
+        )
+    elif pt.get("method", "calculate") == "calculate" and any(ln.key.startswith("ptax:") for ln in tax_lines) \
+            and any(ln.key.startswith("ptax_auto") for ln in tax_lines):
+        warnings.append(
+            "Property taxes are both calculated and entered manually. Make sure the same taxes are not counted twice."
         )
 
     # --- Transfer tax -------------------------------------------------------------
@@ -317,5 +356,5 @@ def compute(tx: dict) -> NetSheet:
     return NetSheet(
         mode=tx["mode"], facts=facts, price=price, lines=lines, total_debits=total_debits,
         total_payoffs=total_payoffs, total_credits=total_credits, net=net, warnings=warnings,
-        info=info, input_errors=errors, tax_pending_message=property_tax.PENDING_MESSAGE,
+        info=info, input_errors=errors, tax_note=property_tax.DISCLAIMER,
     )

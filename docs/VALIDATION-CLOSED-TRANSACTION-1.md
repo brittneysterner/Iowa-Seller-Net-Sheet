@@ -88,3 +88,17 @@ August. The settlement statement shows no later adjustment.
 **Next:** closed transactions from **Escrow Plus** and from a **lender-run** closing (the settlement agents used
 most often), ideally with mid-month possession: one between October and February and one between March and June.
 The whole-months finding above applies to **this attorney's** closing only, until other agents are checked.
+
+### Correction: the possession day
+
+Under the 30-day-month method, the 31st counts as day 30. So for possession on **July 31**, July comes out to 30 days
+whether the possession day goes to the seller or the buyer. **This closing does not show who was charged for the
+possession day.** An earlier message to the agent said it pointed to the seller; that overstated the evidence. The app
+defaults to the seller, which slightly understates the seller's net and is the cautious choice for an estimate. There
+is a Seller / Buyer setting on each net sheet.
+
+### Result after the property-tax calculation was built (2026-10-27)
+
+Using the app's calculation (prior-year bill $4,976, both installments unpaid, 360-day year, possession July 31, 2026):
+$2,488.00 + $2,488.00 + $414.67 = **$5,390.67** compared with **$5,390.68** on the settlement statement. Net to seller:
+**$359,581.07** compared with **$359,581.06**. This is covered by `tests/test_closed_transactions.py`.
