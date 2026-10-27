@@ -8,7 +8,9 @@ This takes about 10 minutes the first time. You need an internet connection only
 2. Pick the branch that has the latest version (ask Claude which one).
 3. Click the green **Code** button, then **Download ZIP**.
 4. Open your **Downloads** folder and double-click the ZIP file. A folder appears.
-5. Move that folder into your **Documents** folder and rename it **Seller Net Sheet App**.
+5. Rename the folder **Seller Net Sheet App** and move it into your **home folder** (the house icon with your
+   name in Finder's sidebar). **Don't put it in Documents or Desktop if those sync to iCloud.** On its first start,
+   the app downloads many small support files, and iCloud would try to upload them all.
 
 ## Step 2 — Start it the first time
 
@@ -37,5 +39,6 @@ You can also drag **Start Net Sheet.command** to your Dock (next to the Trash) f
 ## Your data
 
 Net sheets are saved in **Documents → Seller Net Sheets**. If your Documents folder syncs to iCloud,
-or you use Time Machine, they are backed up automatically. Deleting or replacing the app folder does
+or you use Time Machine, they are backed up automatically. If iCloud says your storage is full, new files are
+saved on your Mac but **not** backed up until you free up space. Deleting or replacing the app folder does
 **not** delete your net sheets.
