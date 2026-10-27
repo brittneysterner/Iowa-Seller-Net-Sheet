@@ -51,8 +51,11 @@ does **not** calculate it until:
 
 Until then, you type in the property-tax amount(s). They are labeled "entered manually — not calculated by this app."
 
+Step 1 is done: see [PURCHASE-AGREEMENT-REVIEW.md](PURCHASE-AGREEMENT-REVIEW.md) for the form's exact ¶9 wording
+and the two possible readings of "prior fiscal year." Steps 2 and 3 are still open.
+
 Questions to settle during that review:
-- Do the taxes prorate to the closing date or the possession date?
+- ~~Closing date or possession date?~~ **Possession date** (form ¶9).
 - Is the closing day a seller day or a buyer day?
 - Is the daily rate based on a 365-day year or the actual number of days?
 - Which tax amount is used: "last known actual net taxes," or something else?

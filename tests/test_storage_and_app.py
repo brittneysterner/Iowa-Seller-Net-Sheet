@@ -160,3 +160,15 @@ def test_contract_upload_and_view(client, data_dir):
 
 def test_unknown_transaction_404(client):
     assert client.get("/t/nope").status_code == 404
+
+
+def test_adobe_only_form_is_detected_and_warned(client, data_dir):
+    import io
+    client.post("/new", data={"mode": "contract", "name": "G"})
+    xfa = b"%PDF-1.7\n1 0 obj << /AcroForm << /XFA [ (template) 4 0 R ] >> >>\n"
+    client.post("/t/G/contract", data={"contract": (io.BytesIO(xfa), "blank form.pdf")},
+                content_type="multipart/form-data")
+    assert storage.load("G")["contract_file"]["adobe_only_form"] is True
+    page = client.get("/t/G").data
+    assert b"Adobe-only fillable form" in page
+    assert b"POSSESSION date" in page  # form-based hint shown in contract mode

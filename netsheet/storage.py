@@ -137,6 +137,8 @@ def store_contract_copy(tx: dict, original_filename: str, data: bytes) -> dict:
         "sha256": hashlib.sha256(data).hexdigest(),
         "bytes": len(data),
         "uploaded_at": models.now_iso(),
+        # Adobe "XFA" forms show only a "requires Adobe Reader" page in browsers.
+        "adobe_only_form": b"/XFA" in data,
     }
     tx["contract_file"] = info
     tx.setdefault("contract_history", []).append(info)

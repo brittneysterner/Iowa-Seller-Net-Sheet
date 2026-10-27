@@ -20,6 +20,10 @@
   {% if tx.contract_file %}
     <p>Copy on file: <strong>{{ tx.contract_file.stored_as }}</strong>
       <span class="muted small">(from “{{ tx.contract_file.original_filename }}”, saved {{ tx.contract_file.uploaded_at.replace('T',' ')[:16] }}, read-only)</span></p>
+    {% if tx.contract_file.adobe_only_form %}
+    <div class="flash bad">This PDF is an Adobe-only fillable form. Web browsers may show a “requires Adobe Reader” page instead of the contract.
+      Open it in Adobe Acrobat Reader, or upload the signed copy exported from your e-signature or forms system.</div>
+    {% endif %}
     <p><button class="secondary" data-toggle-pdf>Show / hide contract beside the form</button>
        <a class="btn secondary" href="{{ url_for('contract_pdf', tx_id=tx.id) }}" target="_blank">Open in new tab</a></p>
     <p class="muted small">Automatic contract reading is not turned on yet. Type each value below while looking at the contract.</p>
@@ -50,6 +54,7 @@
             {% if not f.confirmed %}<span class="badge review">NEEDS REVIEW</span>{% endif %}{% endif %}
         </label>
         <input type="{{ 'date' if kind == 'date' else 'text' }}" name="fact-{{ key }}" value="{{ f.value }}">
+        {% if not listing and models.FACT_HINTS.get(key) %}<div class="muted small">{{ models.FACT_HINTS[key] }}</div>{% endif %}
         {% if f.source == 'contract' %}
           {% if f.quote %}<div class="quote">“{{ f.quote }}”</div>{% endif %}
           <label class="check"><input type="checkbox" name="fact-{{ key }}-confirmed" {% if f.confirmed %}checked{% endif %}> I checked this against the contract</label>
@@ -68,6 +73,7 @@
     <div class="grid">
     {% for key in ['other_concessions', 'personal_property', 'unusual_provisions'] %}
       <div class="field"><label>{{ models.FACTS[key][0] }}</label>
+        {% if models.FACT_HINTS.get(key) %}<div class="muted small">{{ models.FACT_HINTS[key] }}</div>{% endif %}
         <textarea name="fact-{{ key }}">{{ tx.facts[key].value }}</textarea></div>
     {% endfor %}
     </div>

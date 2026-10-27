@@ -50,21 +50,35 @@ COMMISSION_ROLES = {
     "other": "Other compensation",
 }
 
+# Short reminders shown under a field, from the Iowa Association of REALTORS(R)
+# "Iowa Offer to Purchase Real Estate" (form updated 3/10/2026). Contract mode only.
+FACT_HINTS = {
+    "closing_date": "Form ¶4: closing is “on or before” this date, so the actual date may be earlier.",
+    "possession_date": "Form ¶4: possession is at closing unless the parties agree otherwise. "
+                       "Form ¶9 ties tax and other prorations to the POSSESSION date.",
+    "seller_paid_buyer_costs": "The form has no printed blank for this. Look in ¶5 “OTHER”, ¶29 and any addenda.",
+    "personal_property": "Form ¶8: personal property passes only by a separate bill of sale.",
+}
+
 # Suggestions offered for optional seller costs. None are added automatically.
 OTHER_COST_SUGGESTIONS = [
     "Settlement / closing fee",
     "Recording fees (release of mortgage, etc.)",
     "Special assessments",
+    "Escrow holdback for pending / deficiency assessments",
     "Septic time-of-transfer inspection",
     "Unpaid utilities (water / sewer)",
     "Seller-paid repairs",
+    "Wood pest inspection / treatment",
     "Home warranty",
     "Wire / courier fees",
     "HOA dues / transfer fee",
+    "Rent / security deposits to buyer",
     "Other seller expense",
 ]
 
 CREDIT_SUGGESTIONS = [
+    "Unused fuel / propane (at current market value)",
     "Prepaid HOA dues refund",
     "Escrow / utility deposit refund",
     "Other credit to seller",
