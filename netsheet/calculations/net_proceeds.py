@@ -301,7 +301,9 @@ def compute(tx: dict) -> NetSheet:
     if em is not None:
         info.append(
             f"Earnest money of {fmt(em)} is part of the purchase price (applied toward it at closing). "
-            "It does not change the seller's net and is not subtracted again."
+            "It does not change the seller's net and is not subtracted again. If the broker holds it, the "
+            "settlement statement may show it as 'Deposit retained by broker' and reduce the commission "
+            "paid at settlement by the same amount."
         )
 
     for e in errors:
