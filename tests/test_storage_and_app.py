@@ -172,3 +172,20 @@ def test_adobe_only_form_is_detected_and_warned(client, data_dir):
     page = client.get("/t/G").data
     assert b"Adobe-only fillable form" in page
     assert b"POSSESSION date" in page  # form-based hint shown in contract mode
+
+
+def test_old_records_gain_new_fields(data_dir):
+    t = storage.create_transaction("contract", "Old")
+    path = data_dir / "Old" / storage.DATA_FILE
+    raw = json.loads(path.read_text())
+    del raw["facts"]["settlement_agent"]
+    path.write_text(json.dumps(raw))
+    assert storage.load("Old")["facts"]["settlement_agent"]["value"] == ""
+
+
+def test_settlement_agent_saved_and_shown(client):
+    client.post("/new", data={"mode": "contract", "name": "H"})
+    client.post("/t/H/save", data={"fact-settlement_agent": "Escrow Plus", "fact-sale_price": "100000"})
+    assert storage.load("H")["facts"]["settlement_agent"]["value"] == "Escrow Plus"
+    assert b"Escrow Plus" in client.get("/t/H/results?view=agent").data
+    assert b"Escrow Plus" not in client.get("/t/H/results?view=client").data

@@ -93,7 +93,10 @@ def create_transaction(mode: str, name: str) -> dict:
 
 
 def load(tx_id: str) -> dict:
-    return json.loads((tx_dir(tx_id) / DATA_FILE).read_text())
+    tx = json.loads((tx_dir(tx_id) / DATA_FILE).read_text())
+    for key in models.FACTS:  # records saved before a field existed get it blank
+        tx["facts"].setdefault(key, models.blank_fact())
+    return tx
 
 
 def save(tx: dict, changes: list[dict] | None = None) -> None:

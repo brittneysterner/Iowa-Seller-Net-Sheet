@@ -1,7 +1,9 @@
 # Validation — closed transaction #1
 
 **Property:** Cerro Gordo County, Iowa (names, address and file number left out of this repository).
-**Source:** final HUD-1 settlement statement prepared by the settlement agent, settlement date **July 31, 2026**.
+**Source:** final HUD-1 settlement statement, settlement date **July 31, 2026**.
+**Settlement agent type:** closing **attorney** (law firm). The agent reports that closings are often handled
+instead by **Escrow Plus (Mason City)** or by the **lender** as settlement agent. Their methods may differ.
 **Not yet received:** the executed Purchase Agreement (both scans uploaded so far were blank), and the
 county tax amounts for this parcel.
 
@@ -83,5 +85,6 @@ August. The settlement statement shows no later adjustment.
 3. Possession **March–June**, when both installments are already paid.
 4. Whether the attorney switches to the **new bill once it is issued** (August onward).
 
-**Next:** one or two more closed transactions with mid-month possession, ideally one between October and February
-and one between March and June.
+**Next:** closed transactions from **Escrow Plus** and from a **lender-run** closing (the settlement agents used
+most often), ideally with mid-month possession: one between October and February and one between March and June.
+The whole-months finding above applies to **this attorney's** closing only, until other agents are checked.

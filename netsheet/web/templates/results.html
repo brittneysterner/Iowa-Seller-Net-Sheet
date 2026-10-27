@@ -21,6 +21,8 @@
     <tr><th>Closing date</th><td>{{ sheet.facts.closing_date.value|usdate or 'Not yet set' }}</td></tr>
     {% if sheet.facts.possession_date.value and sheet.facts.possession_date.value != sheet.facts.closing_date.value %}
     <tr><th>Possession date</th><td>{{ sheet.facts.possession_date.value|usdate }}</td></tr>{% endif %}
+    {% if agent and sheet.facts.settlement_agent and sheet.facts.settlement_agent.value %}
+    <tr><th>Settlement agent</th><td>{{ sheet.facts.settlement_agent.value }}</td></tr>{% endif %}
   </table>
 
   <table class="lines" style="margin-top:16px">

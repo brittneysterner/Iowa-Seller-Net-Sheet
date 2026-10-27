@@ -38,6 +38,9 @@ FACTS: dict[str, tuple[str, str]] = {
     "other_concessions": ("Other financial concessions", "longtext"),
     "personal_property": ("Personal property included / excluded", "longtext"),
     "unusual_provisions": ("Unusual financial provisions", "longtext"),
+    # Who handles the closing matters: tax-proration conventions differ between
+    # attorneys, escrow/title companies (e.g. Escrow Plus) and lenders.
+    "settlement_agent": ("Settlement agent / closing attorney", "text"),
 }
 
 # Facts that only make sense once a Purchase Agreement exists.
@@ -57,6 +60,7 @@ FACT_HINTS = {
     "possession_date": "Form ¶4: possession is at closing unless the parties agree otherwise. "
                        "Form ¶9 ties tax and other prorations to the POSSESSION date.",
     "seller_paid_buyer_costs": "The form has no printed blank for this. Look in ¶5 “OTHER”, ¶29 and any addenda.",
+    "settlement_agent": "e.g. Escrow Plus, the lender, or a closing attorney. Tax-proration methods can differ between them.",
     "personal_property": "Form ¶8: personal property passes only by a separate bill of sale.",
 }
 

@@ -51,6 +51,10 @@ does **not** calculate it until:
 
 Until then, you type in the property-tax amount(s). They are labeled "entered manually — not calculated by this app."
 
+Different settlement agents (closing attorneys, Escrow Plus, lenders) may prorate differently, so each net sheet
+records who the settlement agent is. Closed transaction #1 (an attorney closing) matched "13 whole months at the
+prior-year bill"; see [VALIDATION-CLOSED-TRANSACTION-1.md](VALIDATION-CLOSED-TRANSACTION-1.md).
+
 Step 1 is done: see [PURCHASE-AGREEMENT-REVIEW.md](PURCHASE-AGREEMENT-REVIEW.md) for the form's exact ¶9 wording
 and the two possible readings of "prior fiscal year." Steps 2 and 3 are still open.
 
